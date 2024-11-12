@@ -19,9 +19,6 @@ Autoloader::registration($dir);
  * Пример использования системы бронирования
  */
 
-// Создание подключение к базе данных через PDO
-$pdo = (new Repository\Repository())->getPdo();
-
 // Создание экземпляра OrderRepository
 $orderRepository = new OrderRepository();
 

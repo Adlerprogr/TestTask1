@@ -7,7 +7,6 @@ namespace Service;
 use Entity\Order;
 use Exceptions\BookingException;
 use Repository\OrderRepository;
-use Exception;
 
 class TicketBookingService
 {
@@ -37,21 +36,9 @@ class TicketBookingService
 
         $order = new Order($eventId, $eventDate, $ticketAdultPrice, $ticketAdultQuantity, $ticketKidPrice, $ticketKidQuantity, $barcode, $equalPrice);
 
-        try {
-            // Начало транзакции через OrderRepository
-            $this->orderRepository->getPdo()->beginTransaction();
+        $orderId = $this->orderRepository->save($order);
 
-            $orderId = $this->orderRepository->save($order);
-
-            // Фиксация транзакции
-            $this->orderRepository->getPdo()->commit();
-
-            return $orderId;
-        } catch (Exception $e) {
-            // Откат транзакции в случае ошибки
-            $this->orderRepository->getPdo()->rollBack();
-            throw $e;
-        }
+        return $orderId;
     }
 
     private function generateAndBookBarcode(int $eventId, string $eventDate, int $ticketAdultPrice, int $ticketAdultQuantity, int $ticketKidPrice, int $ticketKidQuantity): string

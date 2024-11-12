@@ -16,7 +16,11 @@ class OrderRepository extends Repository
      */
     public function save(Order $order): int
     {
-        $stmt = self::getPdo()->prepare("
+        // Начало транзакции
+        $this->getPdo()->beginTransaction();
+
+        try {
+            $stmt = self::getPdo()->prepare("
             INSERT INTO orders (
                 event_id, 
                 event_date, 
@@ -38,19 +42,29 @@ class OrderRepository extends Repository
                 :equal_price,
                 NOW()
             )
-        ");
+            ");
 
-        $stmt->execute([
-            ':event_id' => $order->getEventId(),
-            ':event_date' => $order->getEventDate(),
-            ':ticket_adult_price' => $order->getTicketAdultPrice(),
-            ':ticket_adult_quantity' => $order->getTicketAdultQuantity(),
-            ':ticket_kid_price' => $order->getTicketKidPrice(),
-            ':ticket_kid_quantity' => $order->getTicketKidQuantity(),
-            ':barcode' => $order->getBarcode(),
-            ':equal_price' => $order->getEqualPrice()
-        ]);
+            $stmt->execute([
+                ':event_id' => $order->getEventId(),
+                ':event_date' => $order->getEventDate(),
+                ':ticket_adult_price' => $order->getTicketAdultPrice(),
+                ':ticket_adult_quantity' => $order->getTicketAdultQuantity(),
+                ':ticket_kid_price' => $order->getTicketKidPrice(),
+                ':ticket_kid_quantity' => $order->getTicketKidQuantity(),
+                ':barcode' => $order->getBarcode(),
+                ':equal_price' => $order->getEqualPrice()
+            ]);
 
-        return (int)self::getPdo()->lastInsertId();
+            $id = (int)self::getPdo()->lastInsertId();
+
+            // Фиксация транзакции
+            $this->getPdo()->commit();
+
+            return $id;
+        } catch (Exception $e) {
+            // Откат транзакции в случае ошибки
+            $this->getPdo()->rollBack();
+            throw $e;
+        }
     }
 }
